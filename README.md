@@ -11,10 +11,10 @@
 Install Firebase CLI with npm
 
 ```bash
+  npm i
   npm install -g firebase-tools
   firebase --version
-  firebase login
-  firebase init
+  npm install firebase admin
 ```
 
 Install Node.js with npm
