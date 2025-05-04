@@ -31,7 +31,143 @@
 
 
     <script type="module">
-    
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            doc,
+            setDoc,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { firebaseConfig } from "./firebaseConfig.js";
+
+        // initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const col = collection(db, 'items');
+        let idToken = '';
+
+        // Elements
+        const addForm = document.getElementById('add-form');
+        const todoInput = document.getElementById('todo-input');
+        const listEl = document.getElementById('todos-list');
+        const logoutBtn = document.getElementById('logout-button');
+
+        // Auth guard & initial load
+        onAuthStateChanged(auth, async user => {
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+            idToken = await user.getIdToken();
+            loadTodos();
+        });
+
+        // Load and render todos
+        async function loadTodos() {
+            listEl.innerHTML = '';
+            try {
+                // Fetch from Express route
+                const res = await fetch('/items', {
+                    headers: { 'Authorization': 'Bearer ' + idToken }
+                });
+                const data = await res.json();
+                console.log('Loaded TODOS payload:', data);
+
+                // If the server returned an error object, bail out
+                if (data && data.error) {
+                    console.error('Server error loading todos:', data.error);
+                    return;
+                }
+
+                // Normalize into an array
+                const todos = Array.isArray(data)
+                    ? data
+                    : (data && typeof data === 'object'
+                        ? Object.values(data)
+                        : []);
+
+                // Now render each todo
+                todos.forEach(renderTodo);
+            } catch (e) {
+                console.error('Error loading todos', e);
+            }
+        }
+
+        // Render a single todo item
+        function renderTodo(todo) {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center border border-gray-200 rounded-lg p-2';
+
+            const span = document.createElement('span');
+            span.textContent = todo.text || todo.title || JSON.stringify(todo);
+            span.className = 'truncate flex-1';
+            li.append(span);
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'text-blue-500 px-2 py-1';
+            editBtn.addEventListener('click', async () => {
+                const newText = prompt('Edit todo:', span.textContent);
+                if (newText != null && newText !== span.textContent) {
+                    try {
+                        const d = doc(db, 'items', todo.id);
+                        await setDoc(d, { text: newText }, { merge: true });
+                        loadTodos();
+                    } catch (e) {
+                        console.error('Error updating todo', e);
+                    }
+                }
+            });
+            li.append(editBtn);
+
+            // Delete button
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.className = 'text-red-500 px-2 py-1';
+            delBtn.addEventListener('click', async () => {
+                if (confirm('Delete this todo?')) {
+                    try {
+                        const d = doc(db, 'items', todo.id);
+                        await deleteDoc(d);
+                        loadTodos();
+                    } catch (e) {
+                        console.error('Error deleting todo', e);
+                    }
+                }
+            });
+            li.append(delBtn);
+
+            listEl.append(li);
+        }
+
+        // Add todo
+        addForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const text = todoInput.value.trim();
+            if (!text) return;
+            try {
+                await addDoc(col, { text, createdAt: new Date().toISOString() });
+                todoInput.value = '';
+                loadTodos();
+            } catch (e) {
+                console.error('Error adding todo', e);
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = '/login.html';
+        });
     </script>
 </body>
 
