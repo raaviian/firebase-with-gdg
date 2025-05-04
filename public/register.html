@@ -35,40 +35,7 @@
 
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import {
-            getAuth,
-            createUserWithEmailAndPassword
-        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { firebaseConfig } from "./firebaseConfig.js";
-
-        // initialize
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        document
-            .getElementById("register-form")
-            .addEventListener("submit", async e => {
-                e.preventDefault();
-                const email = e.target.email.value;
-                const pwd = e.target.password.value;
-                const confirm = e.target.confirmPassword.value;
-
-                if (pwd !== confirm) {
-                    return alert("Passwords do not match.");
-                }
-
-                try {
-                    const { user } = await createUserWithEmailAndPassword(auth, email, pwd);
-                    console.log("Registered:", user.email);
-                    // optional: get ID token and store
-                    const token = await user.getIdToken();
-                    localStorage.setItem("fb_token", token);
-                    window.location.href = "/items";
-                } catch (err) {
-                    alert("Registration failed: " + err.message);
-                }
-            });
+     
     </script>
 </body>
 

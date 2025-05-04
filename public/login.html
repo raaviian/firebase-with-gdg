@@ -37,36 +37,7 @@
 
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import {
-            getAuth,
-            signInWithEmailAndPassword
-        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { firebaseConfig } from "./firebaseConfig.js";
-
-        // initialize
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        document
-            .getElementById("login-form")
-            .addEventListener("submit", async e => {
-                e.preventDefault();
-                const email = e.target.email.value;
-                const password = e.target.password.value;
-
-                try {
-                    const { user } = await signInWithEmailAndPassword(auth, email, password);
-                    console.log("Logged in:", user.email);
-                    // store the ID token in localStorage (optional)
-                    const token = await user.getIdToken();
-                    localStorage.setItem("fb_token", token);
-                    // redirect to your app
-                    window.location.href = "/homepage.html";
-                } catch (err) {
-                    alert("Login failed: " + err.message);
-                }
-            });
+     
     </script>
 </body>
 
